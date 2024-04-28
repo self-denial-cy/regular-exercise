@@ -1,0 +1,35 @@
+{
+  "name": "regular-exercise",
+  "version": "1.0.0",
+  "packageManager": "pnpm@8.15.4",
+  "scripts": {
+    "prepare": "husky install",
+    "eslint": "eslint . --ext .js --ignore-path .gitignore --fix"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.4",
+    "@babel/eslint-parser": "^7.24.1",
+    "@babel/eslint-plugin": "^7.23.5",
+    "@babel/preset-env": "^7.24.4",
+    "@commitlint/cli": "^17.8.1",
+    "@commitlint/config-conventional": "^17.8.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^8.10.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.3.0",
+    "prettier": "^2.8.8"
+  },
+  "author": {
+    "name": "self-denial-cy",
+    "email": "18556134754@163.com",
+    "url": "https://github.com/self-denial-cy"
+  },
+  "license": "MIT",
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  }
+}
