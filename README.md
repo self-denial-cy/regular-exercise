@@ -82,3 +82,86 @@ console.log(string.match(reg));
 
 #### 1.3.2 贪婪匹配与惰性匹配
 
+```javascript
+const reg = /\d{2,5}/g;
+
+const string = '123 1234 12345 123456';
+
+console.log(string.match(reg));
+```
+
+上述例子中，`/\d{2,5}/g` 表示数字连续出现了 2 到 5 次，会匹配 2、3、4、5 位连续数字
+
+但是其是贪婪的，它会尽可能多的匹配，6 位连续数字它会匹配 5 位，3 位连续数字它会匹配 3 位，反正只要在能力范围内，越多越好
+
+```javascript
+const reg = /\d{2,5}?/g;
+
+const string = '123 1234 12345 123456';
+
+console.log(string.match(reg));
+```
+
+上述例子中，`/\d{2,5}?/g` 表示虽然 2 到 5 位连续数字都行，但是当匹配到 2 位连续数字后，就不再往下尝试了
+
+通过在量词后加个问号就能实现惰性匹配：
+
+| 惰性量词 | 贪婪量词 |
+| -------- | -------- |
+| `{m,n}?` | `{m,n}`  |
+| `{m,}?`  | `{m,}`   |
+| `??`     | `?`      |
+| `+?`     | `+`      |
+| `*?`     | `*`      |
+
+### 1.4 多选分支
+
+一个模式可以实现横向和纵向模糊匹配，而多选分支可以支持多个子模式任选其一
+
+具体形式：`(p1|p2|p3)` 中 p1、p2、p3 是子模式，用 `|` 管道符分隔，表示其中任一
+
+```javascript
+const reg = /good|nice/g;
+
+const string = 'good idea, nice try.';
+
+console.log(string.match(reg));
+```
+
+但需要注意，用 `/good|goodbye/` 去匹配 `goodbye` 字符串时，结果是 `good`
+
+而用 `/goodbye|good/` 去匹配 `goodbye` 字符串时，结果是 `goodbye`
+
+也就是说，分支结构是惰性的，当有一个模式匹配上了，后面的模式就不再尝试了
+
+### 1.5 案例分析
+
+#### 1.5.1 匹配 16 进制颜色值
+
+```javascript
+const reg = /#[0-9a-zA-Z]{6}|#[0-9a-zA-Z]{3}/g;
+
+const string = '#ffbbad #Fc01DF #FFF #ffE';
+
+console.log(string.match(reg));
+```
+
+#### 1.5.2 匹配时间
+
+```javascript
+const reg = /^([01][0-9]|[2][0-3]):[0-5][0-9]$/;
+
+console.log(reg.test('23:59'));
+console.log(reg.test('02:07'));
+```
+
+#### 1.5.3 匹配日期
+
+```javascript
+const reg = /^[0-9]{4}-([0][1-9]|[1][0-2])-([0][1-9]|[12][0-9])|[3][0-1]$/;
+
+console.log(reg.test('2024-04-28'));
+```
+
+#### 1.5.4 匹配 Windows 操作系统文件路径
+
