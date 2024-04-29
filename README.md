@@ -165,3 +165,310 @@ console.log(reg.test('2024-04-28'));
 
 #### 1.5.4 匹配 Windows 操作系统文件路径
 
+```javascript
+const reg = /^[a-zA-Z]:\\([^\\:*<>|"?\r\n/]+\\)*([^\\:*<>|"?\r\n/]+)$/;
+
+console.log(reg.test(process.cwd()));
+```
+
+#### 1.5.5 匹配 id
+
+```javascript
+// const reg = /id=".*?"/;
+const reg = /id="[^"]*"/;
+
+const string = '<div id="container" class="main"></div>';
+
+console.log(string.match(reg));
+```
+
+## 2. 位置匹配攻略
+
+### 2.1 什么是位置
+
+位置【锚】是相邻字符之间的位置
+
+![位置](./images/location.png)
+
+### 2.2 如何匹配位置
+
+在 ES5 中，共有 6 个锚：
+
+- `^`
+- `$`
+- `\b`
+- `\B`
+- `(?=p)`
+- `(?!p)`
+
+#### 2.2.1 `^` 和 `$`
+
+- `^` 匹配开头，在多行匹配中匹配行开头
+- `$` 匹配结尾，在多行匹配中匹配行结尾
+
+```javascript
+const string = 'hello';
+
+const reg = /^|$/g;
+
+console.log(string.replace(reg, '#'));
+```
+
+上述例子中，用 `#` 替换开头和结尾【位置可以替换成字符】
+
+```javascript
+const string = 'I\nlove\njavascript';
+
+const reg = /^|$/gm;
+
+console.log(string.replace(reg, '#'));
+```
+
+上述例子中，使用 `m` 修饰符开启多行匹配模式，这时候 `^` 和 `$` 表示行开头和行结尾
+
+> 需要注意，在大多数正则匹配引擎中，`\r` 和 `\n` 都会被认定开启了新行
+>
+> 额外，JavaScript 中模板字符串中换行符锁定为 `\n`，不管在什么操作系统中
+
+#### 2.2.2 `\b` 和 `\B`
+
+`\b` 是单词边界，具体就是 `\w` 和 `\W` 之间的位置，也包括 `\w` 和 `^` 之间的位置和 `\w` 和 `$` 	之间的位置
+
+```javascript
+const string = '[JS] Lesson_01.mp4';
+
+const reg = /\b/g;
+
+console.log(string.replace(reg, '#'));
+```
+
+`\B` 就是 `\b` 反面的意思，非单词边界，在字符串所有位置中，扣掉 `\b` 的位置，剩下的位置都是 `\B` 的
+
+具体来说，就是 `\w` 和 `\w`、`\W` 和 `\W`、`\W` 和 `^`、`\W` 和 `$` 之间的位置
+
+```javascript
+const string = '[JS] Lesson_01.mp4';
+
+const reg = /\B/g;
+
+console.log(string.replace(reg, '#'));
+```
+
+#### 2.2.3 `(?=p)` 和 `(?!p)`
+
+`(?=p)`，其中 `p` 是一个子模式，即 `p` 之前的位置
+
+譬如，`(?=l)` 表示 `l` 字符之前的位置：
+
+```javascript
+const string = 'hello';
+
+const reg = /(?=l)/g;
+
+console.log(string.replace(reg, '#'));
+```
+
+而 `(?!p)` 就是 `(?=p)` 的反面意思，字符串所有位置中，扣掉 `(?=p)` 的位置，剩下的位置都是 `(?!p)` 的
+
+```javascript
+const string = 'hello';
+
+const reg = /(?!l)/g;
+
+console.log(string.replace(reg, '#'));
+```
+
+> 两者学名分别是 `positive lookahead` 和 `negative lookahead`
+>
+> 也就是正向先行断言和负向先行断言
+>
+> ES6+ 版本中，支持 `positive lookbehind` 和 `negative lookbehind`
+>
+> 具体是 `(?<=p)` 和 `(?<!p)`
+>
+> 也就是匹配 `p` 之后的位置和匹配除 `p` 之后的位置以外的所有位置
+
+### 2.3 位置的特性
+
+对于位置的理解，可以理解成空字符
+
+譬如，`hello` 字符串等价于以下形式：
+
+```javascript
+console.log('hello' === '' + 'h' + '' + 'e' + '' + 'l' + '' + 'l' + '' + 'o' + '');
+console.log('hello' === '' + '' + 'hello' + '' + '' + '');
+```
+
+因此，将 `/^hello$/` 写成 `/^^hello$$$/` 没有任何问题，甚至更复杂的也可以：
+
+```javascript
+console.log(/^^hello$$$/.test('hello'));
+console.log(/(?=he)^^he(?=\w)llo$\b\b$/.test('hello'));
+```
+
+### 2.4 案例分析
+
+#### 2.4.1 不匹配任何东西的正则
+
+```javascript
+const string = 'hello';
+
+// const reg = /.^/;
+const reg = /$./;
+
+console.log(string.match(reg));
+```
+
+#### 2.4.2 数字的千位分隔符表示法
+
+```javascript
+const string = '123456789';
+
+const reg = /(?!^)(?=(\d{3})+$)/g;
+
+console.log(string.replace(reg, ','));
+```
+
+#### 2.4.3 验证密码问题
+
+要求密码长度 6 到 12 位，由数字、小写字母、大写字母组成，但必须至少包括两种字符
+
+两种思路：
+
+1. 数字和小写字母、数字和大写字母、小写字母和大写字母
+2. 不能全是数字、不能全是小写字母、不能全是大写字母
+
+```javascript
+// const reg = /((?=.*[0-9])(?=.*[a-z])|(?=.*[0-9])(?=.*[A-Z])|(?=.*[a-z])(?=.*[A-Z]))^[0-9a-zA-Z]{6,12}$/;
+const reg = /(?!^[0-9]{6,12}$)(?!^[a-z]{6,12}$)(?!^[A-Z]{6,12}$)^[0-9a-zA-Z]{6,12}$/;
+
+const string = '1qazXSW2';
+
+console.log(string.match(reg));
+```
+
+## 3. 括号的作用
+
+### 3.1 分组和分支结构
+
+#### 3.1.1 分组
+
+```javascript
+const reg = /(ab)+/g;
+
+const string = 'ababa abbb ababab';
+
+console.log(string.match(reg));
+```
+
+#### 3.1.2 分支结构
+
+```javascript
+const reg = /^I love (JavaScript|Regular Expression)$/;
+
+console.log(reg.test('I love JavaScript'));
+console.log(reg.test('I love Regular Expression'));
+```
+
+### 3.2 分组引用
+
+> 这是括号一个重要的作用，有了它，就可以进行数据提取，以及更强大的替换操作
+
+#### 3.2.1 提取数据
+
+```javascript
+const reg = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const string = '2024-04-29';
+
+console.log(string.match(reg));
+```
+
+> `match` 执行返回一个数组，第一个元素是整体匹配结果，然后是各个分组【括号里】匹配的内容，然后是匹配下标，最后是输入的文本
+>
+> 另外，正则表达式是否有 `g` 修饰符，`match` 返回的数组格式是不一样的
+
+另外也可以使用正则实例对象的 `exec` 方法：
+
+```javascript
+const reg = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const string = '2024-04-29';
+
+console.log(reg.exec(string));
+```
+
+还可以使用构造函数的全局属性 `$1` 至 `$9` 来获取：
+
+```javascript
+const reg = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const string = '2024-04-29';
+
+reg.test(string);
+// reg.exec(string);
+// string.match(reg);
+
+console.log(RegExp.$1);
+console.log(RegExp.$2);
+console.log(RegExp.$3);
+```
+
+> 不推荐，该特性已弃用
+
+#### 3.2.2 替换
+
+```javascript
+const reg = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const string = '2024-04-29';
+
+string.replace(reg, function () {
+  console.log(arguments);
+});
+
+console.log(string.replace(reg, '$2/$3/$1'));
+```
+
+### 3.3 反向引用
+
+除了使用相应 API 来引用分组，也可以在正则本身里引用分组，但只能引用之前出现的分组，即反向引用
+
+```javascript
+const reg = /^\d{4}(-|\/|\.)\d{2}(-|\/|\.)\d{2}$/;
+
+console.log(reg.test('2024-04-29'));
+console.log(reg.test('2024/04/29'));
+console.log(reg.test('2024.04.29'));
+console.log(reg.test('2024-04/29'));
+```
+
+> 上述例子中，虽然匹配了要求的情况，但是也匹配了 `2024-04/29` 这样的错误数据
+
+```javascript
+const reg = /^\d{4}(-|\/|\.)\d{2}\1\d{2}$/;
+
+console.log(reg.test('2024-04-29'));
+console.log(reg.test('2024/04/29'));
+console.log(reg.test('2024.04.29'));
+console.log(reg.test('2024-04/29'));
+```
+
+> 上述例子中，通过 `\1` 引用了之前的分组，不管它匹配到了什么，都匹配那个同样的具体某个字符
+
+#### 3.3.1 括号嵌套怎么办
+
+```javascript
+const reg = /^((\d)(\d(\d)))\1\2\3\4$/;
+
+const string = '1231231233';
+
+console.log(reg.test(string)); // true
+console.log(RegExp.$1); // 123
+console.log(RegExp.$2); // 1
+console.log(RegExp.$3); // 23
+console.log(RegExp.$4); // 3
+```
+
+#### 3.3.2 `\10` 表示什么
+
