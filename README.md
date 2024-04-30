@@ -472,3 +472,79 @@ console.log(RegExp.$4); // 3
 
 #### 3.3.2 `\10` 表示什么
 
+`\10` 表示第十个分组
+
+```javascript
+const reg = /^(1)(2)(3)(4)(5)(6)(7)(8)(9)(#) \10+$/;
+
+const string = '123456789# #######';
+
+console.log(string.match(reg));
+```
+
+> 如果要匹配 `\1` 和 `0` 的话，请使用 `(?:\1)0` 或 `\1(?:0)`
+
+#### 3.3.3 引用不存在的分组会怎样
+
+因为反向引用，是引用之前的分组
+
+但在正则中引用了不存在的分组时，此时正则不会报错，只是匹配反向引用的字符本身
+
+譬如 `\2`，就匹配 `\2`【注意，`\2` 表示对 `2` 进行了转义】
+
+```javascript
+const reg = /^\1\2\3\4\5\6\7$/;
+
+const string = '\1\2\3\4\5\6\7';
+
+console.log(string.split(''));
+
+console.log(reg.test(string));
+```
+
+#### 3.3.4 分组之后有量词会怎样
+
+分组之后有量词的话，分组最终捕获到的数据是最后一次的匹配
+
+```javascript
+const reg = /^(\d)+$/;
+
+const string = '12345';
+
+console.log(string.match(reg));
+```
+
+```javascript
+const reg = /^(\d)+ \1$/;
+
+const string = '12345 5';
+
+console.log(string.match(reg));
+```
+
+### 3.4 非捕获括号
+
+之前出现的括号，都会捕获它们匹配到的数据，以便后续引用，因此也称它们为捕获型分组和捕获型分支
+
+如果只想要括号最原始的功能，但不会引用它，即，既不在 API 中引用，也不会在正则里反向引用
+
+此时，可以使用非捕获括号 `(?:p)` 和 `(?:p1|p2|p3)`：
+
+```javascript
+const reg = /(?:ab)+/g;
+
+const string = 'ababa abbb ababab';
+
+console.log(string.match(reg));
+```
+
+```javascript
+const reg = /^I love (?:JavaScript|Regular Expression)$/;
+
+console.log(reg.test('I love JavaScript'));
+console.log(reg.test('I love Regular Expression'));
+```
+
+### 3.5 案例分析
+
+#### 3.5.1 模拟字符串 trim 方法
