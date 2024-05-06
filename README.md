@@ -548,3 +548,154 @@ console.log(reg.test('I love Regular Expression'));
 ### 3.5 案例分析
 
 #### 3.5.1 模拟字符串 trim 方法
+
+`trim` 方法是去掉字符串开头和结尾的空白符，有两种思路实现：
+
+- 匹配到开头和结尾的空白符，然后替换成空字符
+- 匹配整个字符串，然后用引用来提取出相应的数据
+
+```javascript
+function trim(str) {
+  return str.replace(/^\s+|\s+$/g, '');
+}
+
+console.log(trim('   abc   '));
+```
+
+```javascript
+function trim(str) {
+  return str.replace(/^\s*(.*?)\s*$/, '$1');
+}
+
+console.log(trim('   abc  '));
+```
+
+#### 3.5.2 将每个单词的首字母转化为大写
+
+```javascript
+function titleCase(str) {
+  return str.toLowerCase().replace(/(?:^|\s+)\w/g, function (c) {
+    return c.toUpperCase();
+  });
+}
+
+console.log(titleCase('my name is jerry'));
+```
+
+#### 3.5.3 驼峰化
+
+```javascript
+function PascalCase(str) {
+  return str.replace(/[-_\s]+(.?)/g, function (match, c) {
+    return c ? c.toUpperCase() : '';
+  });
+}
+
+console.log(PascalCase('-moz-transform '));
+```
+
+#### 3.5.4 中划线化
+
+```javascript
+function strike(str) {
+  return str
+    .replace(/([A-Z])/g, '-$1')
+    .replace(/[-_\s]+/g, '-')
+    .toLowerCase();
+}
+
+console.log(strike('MozTransform'));
+```
+
+#### 3.5.5 HTML 转义和反转义
+
+```javascript
+function escape(str) {
+  const chars = {
+    '<': 'lt',
+    '>': 'gt',
+    '"': 'quot',
+    '&': 'amp',
+    "'": 'apos',
+    ' ': 'nbsp'
+  };
+  return str.replace(new RegExp(`[${Object.keys(chars).join('')}]`, 'g'), function (match) {
+    return `&${chars[match]};`;
+  });
+}
+
+console.log(escape("<div class='container'>this is container</div>"));
+
+function unescape(str) {
+  const chars = {
+    lt: '<',
+    gt: '>',
+    quot: '"',
+    amp: '&',
+    apos: "'",
+    nbsp: ' '
+  };
+  return str.replace(/&([^;]+);/g, function (match, key) {
+    if (key in chars) return chars[key];
+    return match;
+  });
+}
+
+console.log(unescape(escape("<div class='container'>this is container</div>")));
+```
+
+#### 3.5.6 匹配成对标签
+
+```javascript
+const reg = /<([^>]+)>[^]*<\/\1>/g;
+
+const str1 = '<p>this is p</p>';
+const str2 = '<p>this is p</p><div>this is div</div>';
+const str3 = `<p>this is p</p>
+<div>this is div</div>`;
+
+console.log(str1.match(reg));
+
+console.log(str2.match(reg));
+
+console.log(str3.match(reg));
+```
+
+## 4 回溯法原理
+
+### 4.1 没有回溯的匹配
+
+假设正则是 `/ab{1,3}c/`，当目标字符串是 `abbbc` 时，就没有所谓的回溯，其匹配过程如下：
+
+![没有回溯的匹配](./images/mate1.png)
+
+### 4.2 有回溯的匹配
+
+如果目标字符串是 `abbc` 时，匹配过程中就有回溯：
+
+![有回溯的匹配](./images/mate2.png)
+
+再举个例子，正则是 `/ab{1,3}bbc/`，目标字符串是 `abbbc`，匹配过程如下：
+
+![有回溯的匹配](./images/mate3.png)
+
+再举个例子，正则是 `/".*"/`，目标字符串是 `"abc"de`，匹配过程如下：
+
+![有回溯的匹配](./images/mate4.png)
+
+> 可以看出 `.*` 非常影响效率，为了减少不必要的回溯，可以修改正则为 `/"[^"]*"/`
+
+### 4.3 常见的回溯形式
+
+正则表达式匹配字符串的这种方式，叫做回溯法
+
+回溯法也称试探法，基本思想：从问题的某一状态【初始状态】出发，搜索从该状态出发所能达到的最深路径，当一条路走到尽头时，再后退一步或若干步，从另一种可能状态出发，继续搜索，直到所有路径都试探过
+
+这种不断前进，不断回溯寻找解的方法，就叫做回溯法
+
+本质上就是深度优先搜索算法，其中退到之前某一步的过程，就叫做回溯
+
+从之前匹配过程中可以看出，当路走不通时，就会发生回溯，即尝试匹配失败时，接下来的一步通常就是回溯
+
+#### 4.3.1 贪婪量词
+
