@@ -1088,3 +1088,236 @@ console.log(checkPassword('1qazxsw2'));
 - 匹配失败的话，从下一位开始继续尝试匹配
 - 最终结果，匹配成功或失败
 
+```javascript
+const reg = /\d+/g; // 1
+
+const string = '123abc34def'; // 2
+
+console.log(reg.lastIndex, reg.exec(string)); // 3
+console.log(reg.lastIndex, reg.exec(string)); // 4
+console.log(reg.lastIndex, reg.exec(string)); // 5
+console.log(reg.lastIndex, reg.exec(string)); // 6
+```
+
+- 第一步，生成一个正则，引擎会对其进行编译，报错与否出现在这个阶段
+
+- 第三步，尝试匹配，需要确定从哪一个位置开始匹配，一般情形都是字符串开头，也就是第 0 位
+
+  > 当使用 `test` 和 `exec` 方法且正则有 `g` 时，起始位置是从正则对象的 `lastIndex` 属性开始
+
+- 第四步，第三步从第 0 位匹配到第 2 位，这一步就从第 3 位开始匹配
+
+- 第五步，第四步从第 6 位匹配到第 7 位，这一步就从第 8 位开始匹配
+
+- 第六步，第五步从第 8 位匹配到结尾失败，这一步从开头重新开始匹配
+
+#### 6.4.1 使用具体型字符组来代替通配符，来消除回溯
+
+比如，匹配双引号之间的字符，用 `/\".*\"/` 匹配 `123"abc"456` 中的 `abc`：
+
+![有回溯的匹配](./images/mate7.png)
+
+用惰性量词 `/\".*?\"/` 匹配：
+
+![有回溯的匹配](./images/mate8.png)
+
+> 因为回溯的存在，需要引擎保存多种可能中未尝试过的状态，以便后续回溯时使用，注定要占用一定的内存
+>
+> 此时，要使用具体化的字符组，来代替通配符，以便消除不必要的字符，此时使用正则 `/\"[^\"]*\"/`
+
+#### 6.4.2 使用非捕获型分组
+
+因为括号的作用之一是，捕获分组和分支中的数据，那么就需要内存来保存它们
+
+当不需要使用分组数据和反向引用时，可以使用非捕获型分组
+
+#### 6.4.3 独立出确定字符
+
+比如，`/a+/` 可以修改成 `/aa*/`，后者比前者多确定字符 `a`，这样可以加快判断是否匹配失败
+
+#### 6.4.4 提取分支公共部分
+
+比如，`/^abc|^def/` 可以修改成 `/^(?:abc|def)/`
+
+又比如，`/this|that/` 可以修改成 `/th(?:is|at)/`
+
+#### 6.4.5 减少分支数量，缩小它们范围
+
+比如，`/red|read/` 可以修改成 `/rea?d/`
+
+## 7 编程
+
+### 7.1 四种操作
+
+正则表达式是匹配模式，不管如何使用正则表达式，都需要先匹配
+
+有了匹配这一基本操作后，才有其它操作：验证、切分、提取、替换
+
+进行任何操作，都需要宿主引擎相关 API 的配合使用，当然，在 JavaScript 中，相关 API 也不多
+
+#### 7.1.1 验证
+
+验证是正则表达式最直接的应用，比如表单验证
+
+所谓匹配，就是看目标字符串中是否有满足匹配条件的子串，因此，匹配的本质就是查找
+
+有没有匹配，是不是匹配上，判断是否的操作，即称为验证
+
+比如，判断一个字符串中是否有数字：
+
+```javascript
+const reg = /\d/;
+
+const string = 'abc123';
+
+console.log(!!~string.search(reg));
+```
+
+```javascript
+const reg = /\d/;
+
+const string = 'abc123';
+
+console.log(reg.test(string));
+```
+
+```javascript
+const reg = /\d/;
+
+const string = 'abc123';
+
+console.log(!!string.match(reg));
+```
+
+```javascript
+const reg = /\d/;
+
+const string = 'abc123';
+
+console.log(!!reg.exec(string));
+```
+
+#### 7.1.2 切分
+
+所谓切分，就是把目标字符串，切成一段一段的
+
+在 JavaScript 中，使用 `split`
+
+```javascript
+const reg = /,/;
+
+const string = 'html,css,javascript';
+
+console.log(string.split(reg));
+```
+
+又比如，如下的日期格式：
+
+```tex
+2017/06/26
+2017.06.26
+2017-06-26
+```
+
+```javascript
+const reg = /\D/;
+
+const string1 = '2017/06/26';
+const string2 = '2017.06.26';
+const string3 = '2017-06-26';
+
+console.log(string1.split(reg));
+console.log(string2.split(reg));
+console.log(string3.split(reg));
+```
+
+#### 7.1.3 提取
+
+虽然整体匹配上了，但有时需要提取部分匹配的数据
+
+此时，正则通常使用分组引用【捕获】功能，还需要配合使用相关 API
+
+```javascript
+const reg = /^(\d{4})\D(\d{2})\D(\d{2})$/;
+
+const string = '2024-05-09';
+
+console.log(string.match(reg));
+```
+
+```javascript
+const reg = /^(\d{4})\D(\d{2})\D(\d{2})$/;
+
+const string = '2024-05-09';
+
+console.log(reg.exec(string));
+```
+
+```javascript
+const reg = /^(\d{4})\D(\d{2})\D(\d{2})$/;
+
+const string = '2024-05-09';
+
+reg.test(string);
+
+console.log(RegExp.$1, RegExp.$2, RegExp.$3);
+```
+
+```javascript
+const reg = /^(\d{4})\D(\d{2})\D(\d{2})$/;
+
+const string = '2024-05-09';
+
+string.search(reg);
+
+console.log(RegExp.$1, RegExp.$2, RegExp.$3);
+```
+
+```javascript
+const reg = /^(\d{4})\D(\d{2})\D(\d{2})$/;
+
+const string = '2024-05-09';
+
+const arr = [];
+
+string.replace(reg, function (match, year, month, day) {
+  console.log(match, year, month, day);
+  arr.push(year, month, day);
+});
+
+console.log(arr);
+```
+
+#### 7.1.4 替换
+
+找，往往不是目的
+
+通常下一步是为了替换
+
+在 JavaScript 中，使用 `replace` 进行替换
+
+比如，把日期格式 `yyyy-mm-dd` 替换成 `yyyy/mm/dd`：
+
+```javascript
+const reg = /\-/g;
+
+const string = '2024-05-09';
+
+console.log(string.replace(reg, '/'));
+```
+
+### 7.2 相关 API 注意要点
+
+- `String#search`
+- `String#split`
+- `String#match`
+- `String#replace`
+- `RegExp#test`
+- `RegExp#exec`
+
+#### 7.2.1 search 和 match 的参数问题
+
+字符串的 4 个方法都支持正则和字符串参数
+
+但是 `search` 和 `match` 会把字符串转换为正则：
+
