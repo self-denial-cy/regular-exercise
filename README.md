@@ -1321,3 +1321,125 @@ console.log(string.replace(reg, '/'));
 
 但是 `search` 和 `match` 会把字符串转换为正则：
 
+```javascript
+const string = '2024.05.10';
+
+console.log(string.search('.'));
+console.log(string.search(/./));
+console.log(string.search('\\.'));
+console.log(string.search(/\./));
+
+console.log(string.match('.'));
+console.log(string.match(/./));
+console.log(string.match('\\.'));
+console.log(string.match(/\./));
+
+console.log(string.split('.'));
+console.log(string.split(/./));
+console.log(string.split('\\.'));
+console.log(string.split(/\./));
+
+console.log(string.replace('.', '/'));
+console.log(string.replace(/./, '/'));
+console.log(string.replace('\\.', '/'));
+console.log(string.replace(/\./, '/'));
+```
+
+#### 7.2.2 match 返回结果的格式问题
+
+`match` 返回结果的格式，与正则对象是否有修饰符 `g` 有关
+
+```javascript
+const string = '2024.05.10';
+
+const reg1 = /\b(\d+)\b/;
+const reg2 = /\b(\d+)\b/g;
+
+console.log(string.match(reg1));
+console.log(string.match(reg2));
+```
+
+没有 `g`，返回的是标准匹配格式，数组的第一个元素是整体匹配的内容，接下来是分组捕获的内容，然后是整体匹配的第一个下标，最后是输入的目标字符串
+
+有 `g`，返回的是所有匹配的内容
+
+当没有匹配时，不管有无 `g`，都返回 `null`
+
+#### 7.2.3 exec 比 match 更强大
+
+当正则没有 `g` 时，使用 match 返回标准匹配格式
+
+但是有 `g` 后，返回所有匹配的内容，就没有关键信息 `index` 了
+
+而 `exec` 就能解决这个问题，它能接着上一次匹配后继续匹配
+
+```javascript
+const string = '2024.05.10';
+
+const reg1 = /\b(\d+)\b/;
+const reg2 = /\b(\d+)\b/g;
+
+console.log(reg1.exec(string));
+console.log(reg1.lastIndex);
+console.log(reg1.exec(string));
+console.log(reg1.lastIndex);
+console.log(reg1.exec(string));
+console.log(reg1.lastIndex);
+
+console.log(reg2.exec(string));
+console.log(reg2.lastIndex);
+console.log(reg2.exec(string));
+console.log(reg2.lastIndex);
+console.log(reg2.exec(string));
+console.log(reg2.lastIndex);
+console.log(reg2.exec(string));
+console.log(reg2.lastIndex);
+console.log(reg2.exec(string));
+console.log(reg2.lastIndex);
+```
+
+正则实例的 `lastIndex` 属性，表示下一次匹配开始的位置
+
+在使用 `exec` 时，经常需要配合使用 `while` 循环：
+
+```javascript
+const string = '2024.05.10';
+
+const reg = /\b(\d+)\b/g;
+
+let result;
+
+while ((result = reg.exec(string))) {
+  console.log(result, reg.lastIndex);
+}
+```
+
+#### 7.2.4 修饰符 g 对 exec 和 test 的影响
+
+字符串的四个方法，每次匹配时，都是从 0 开始，即 `lastIndex` 始终为 0
+
+而正则实例的两个方法 `exec` 和 `test`，当正则是全局匹配时，每一次匹配完成后，都会修改 `lastIndex`：
+
+```javascript
+const reg = /a/g;
+
+console.log(reg.test('a'), reg.lastIndex);
+console.log(reg.test('aba'), reg.lastIndex);
+console.log(reg.test('ababc'), reg.lastIndex);
+```
+
+注意，第三次调用 `test`，从 3 位置处开始匹配，自然就找不到了
+
+> 当 `exec` 结果为 `null` 或 `test` 结果为 `false` 时，就会重置 `lastIndex` 为 0
+
+如果没有 `g` 修饰符，`lastIndex` 始终为 0：
+
+```javascript
+const reg = /a/;
+
+console.log(reg.test('a'), reg.lastIndex);
+console.log(reg.test('aba'), reg.lastIndex);
+console.log(reg.test('ababc'), reg.lastIndex);
+```
+
+#### 7.2.5 test 整体匹配时需要使用 ^ 和 $
