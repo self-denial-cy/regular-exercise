@@ -1443,3 +1443,148 @@ console.log(reg.test('ababc'), reg.lastIndex);
 ```
 
 #### 7.2.5 test 整体匹配时需要使用 ^ 和 $
+
+`test` 是看目标字符串中是否有子串匹配正则，即有部分匹配即可
+
+如果要整体匹配，正则前后需要添加开头和结尾
+
+#### 7.2.6 split 相关注意事项
+
+- 它可以有第二个参数，表示结果数组的最大长度
+
+  ```javascript
+  const string = 'html,css,javascript';
+  
+  console.log(string.split(/,/, 2));
+  ```
+
+- 正则使用分组时，结果数组中是包含分隔符的
+
+  ```javascript
+  const string = 'html,css,javascript';
+  
+  console.log(string.split(/(,)/));
+  ```
+
+#### 7.2.7 replace 是很强大的
+
+`replace` 有两种使用形式，这是因为它的第二个参数，可以是字符串，也可以是函数
+
+当第二个参数是字符串时，如下的字符有特殊的含义：
+
+| 属性                | 描述                           |
+| ------------------- | ------------------------------ |
+| `$1`,`$2`,...,`$99` | 匹配第 1-99 个分组里捕获的文本 |
+| `$&`                | 匹配到的子串文本               |
+| $`                  | 匹配到的子串的左边文本         |
+| `$'`                | 匹配到的子串的右边文本         |
+| `$$`                | 美元符号                       |
+
+```javascript
+const string = '2,3,5';
+
+console.log(string.replace(/^(\d+),(\d+),(\d+)$/, '$3=$1+$2'));
+```
+
+```javascript
+const string = '2,3,5';
+
+console.log(string.replace(/\d+/g, '$&$&$&'));
+```
+
+```javascript
+const string = '2+3=5,3+2=5';
+
+console.log(string.replace(/=/g, "$&$`$&$'$&"));
+```
+
+当第二个参数是函数时：
+
+```javascript
+const string = '1234 2345 3456';
+
+string.replace(/(\d)\d{2}(\d)/g, function () {
+  console.log(...arguments);
+});
+```
+
+#### 7.2.8 使用构造函数需要注意的问题
+
+一般不推荐使用构造函数生成正则，而应该优先使用字面量，因为使用构造函数会写很多 `\`，可读性差
+
+```javascript
+const string = '2017-06-27 2017.06.27 2017/06/27';
+
+const reg1 = /\d{4}(-|\.|\/)\d{2}\1\d{2}/g;
+const reg2 = new RegExp('\\d{4}(-|\\.|\\/)\\d{2}\\1\\d{2}', 'g');
+
+console.log(string.match(reg1));
+console.log(string.match(reg2));
+```
+
+#### 7.2.9 修饰符
+
+| 修饰符 | 描述                                                         |
+| ------ | ------------------------------------------------------------ |
+| `g`    | 全局匹配，即找到所有匹配的，单词是 `global`                  |
+| `i`    | 忽略字母大小写，单词是 `ignoreCase`                          |
+| `m`    | 多行匹配，只影响 `^` 和 `$`，二者变成行的概念，即行开头和行结尾，单词是 `multiline` |
+
+```javascript
+const reg = /./gim;
+
+console.log(reg.global);
+console.log(reg.ignoreCase);
+console.log(reg.multiline);
+```
+
+#### 7.2.10 source 属性
+
+正则实例对象属性，除了 `global`、`ignoreCase`、`multiline`、`lastIndex` 之外，还有一个 `source` 属性
+
+在构建动态的正则表达式时，可以通过查看该属性，来确认构建出的正则到底是什么：
+
+```javascript
+const className = 'high';
+
+const reg = new RegExp('(^|\\s)' + className + '(\\s|$)');
+
+console.log(reg.source);
+```
+
+#### 7.2.11 构造函数属性
+
+构造函数的静态属性基于所执行的最近一次正则操作而变化
+
+除了 `$1` 到 `$9` 之外，还有几个不常用的属性【有兼容性问题】：
+
+| 静态属性              | 描述                                | 简写形式       |
+| --------------------- | ----------------------------------- | -------------- |
+| `RegExp.input`        | 最近一次目标字符串                  | `RegExp["$_"]` |
+| `RegExp.lastMatch`    | 最近一次匹配的文本                  | `RegExp["$&"]` |
+| `RegExp.lastParen`    | 最近一次捕获的文本                  | `RegExp["$+"]` |
+| `RegExp.leftContext`  | 目标字符串中 `lastMatch` 之前的文本 | RegExp["$`"]   |
+| `RegExp.rightContext` | 目标字符串中 `lastMatch` 之后的文本 | `RegExp["$'"]` |
+
+```javascript
+const string = 'a1b2c3d4e5';
+
+const reg = /([abc])(\d)/g;
+
+console.log(string.match(reg));
+
+console.log(RegExp.input);
+
+console.log(RegExp.lastMatch);
+
+console.log(RegExp.lastParen);
+
+console.log(RegExp.leftContext);
+
+console.log(RegExp.rightContext);
+```
+
+## 更多
+
+请 [点击](./docs) 以阅读迷你书
+
